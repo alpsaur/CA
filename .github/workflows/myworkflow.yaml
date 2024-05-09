@@ -86,12 +86,12 @@ jobs:
           OUTPUT: digest
 
       # 6. Digitally sign the image that you have built and push
-      - name: Sign image with a key
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-          cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      #- name: Sign image with a key
+      #  run: |
+      #    echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+      #    cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
+      #  env:
+      #    COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
       # 7. Send a notification to Slack on the successful run of the workflow.
       - name: Slack Notification on Success
