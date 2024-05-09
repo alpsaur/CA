@@ -100,13 +100,13 @@ jobs:
           OUTPUT: digest
 
       # 6. Digitally sign the image that you have built and push
-      - name: Sign image with a key
-      run: |
-        images=""
-        for tag in ${TAGS}; do
-          images+="${tag}@${DIGEST} "
-        done
-        cosign sign --yes --key env://COSIGN_PRIVATE_KEY alpsaur/go-fortune:${{ github.sha }}
+      - name: Sign image with private key
+        run: |
+          images=""
+          for tag in ${TAGS}; do
+            images+="${tag}@${DIGEST} "
+          done
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY alpsaur/go-fortune:${{ github.sha }}
       env:
         TAGS: alpsaur/go-fortune:${{ github.sha }}
         COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
