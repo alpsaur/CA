@@ -34,7 +34,7 @@ jobs:
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: ${{ secrets.SLACK_CHANNEL_ID }}
           slack_token: ${{secrets.SLACK_TOKEN}}
-          file_path: 'trivy-results.txt'
+          file_path: 'trivy_report.txt'
           initial_comment: 'Scan report by Alphonsus Tay'
 
 
@@ -58,18 +58,18 @@ jobs:
       #    name: trivy_report
       #    path: .
 
-      - name: Slack Notification on Failure
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: failure
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
-          SLACK_USERNAME: DipSA58 CICD
-          SLACK_MESSAGE: | 
-            *Scan failed - Alphonsus Tay*
-            Failed trivy scan, see uploaded report.
-          SLACK_FILE_UPLOAD: trivy_report.txt
+      #- name: Slack Notification on Failure
+      #  uses: rtCamp/action-slack-notify@v2
+      #  env:
+      #    SLACK_COLOR: failure
+      #    SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      #    SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
+      #    SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
+      #    SLACK_USERNAME: DipSA58 CICD
+      #    SLACK_MESSAGE: | 
+      #      *Scan failed - Alphonsus Tay*
+      #      Failed trivy scan, see uploaded report.
+      #    SLACK_FILE_UPLOAD: trivy_report.txt
 
       - name: Exit on Failure
         run: exit 1
