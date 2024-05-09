@@ -23,20 +23,9 @@ jobs:
         with:
           scan-type: 'fs'
           format: 'table'
-          severity: 'HIGH'
+          severity: 'CRITICAL'
           output: 'trivy-results.txt'
           exit-code: 1
-
-      #- name: Upload Trivy report with MeilCli
-      #  if: failure()
-      #  uses: MeilCli/slack-upload-file@v4
-      #  with:
-      #    slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
-      #    slack_channel: ${{ secrets.SLACK_CHANNEL_ID }}
-      #    slack_token: ${{secrets.SLACK_TOKEN}}
-      #    file_path: 'trivy-results.txt'
-      #    initial_comment: 'Scan report by Alphonsus Tay'
-
 
       - name: Upload Trivy report with Artifact
         if: failure()
@@ -111,21 +100,21 @@ jobs:
           OUTPUT: digest
 
       # 6. Digitally sign the image that you have built and push
-      #- name: Sign image with a key
-      #  run: |
-      #    echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-      #    cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
-      #  env:
-      #    COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      - name: Sign image with a key
+        run: |
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
+        env:
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
       # 7. Send a notification to Slack on the successful run of the workflow.
       - name: Slack Notification on Success
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: success
-          #SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          #SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          #SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_USERNAME: DipSA58 CICD
           SLACK_TITLE: Image build and signed
           SLACK_MESSAGE: |
