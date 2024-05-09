@@ -24,7 +24,7 @@ jobs:
           scan-type: 'fs'
           format: 'table'
           severity: 'HIGH'
-          output: 'trivy-results.sarif'
+          output: 'trivy-results.txt'
           exit-code: 1
 
       #- name: Upload Trivy report with MeilCli
@@ -34,7 +34,7 @@ jobs:
       #    slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
       #    slack_channel: ${{ secrets.SLACK_CHANNEL_ID }}
       #    slack_token: ${{secrets.SLACK_TOKEN}}
-      #    file_path: 'trivy-results.sarif'
+      #    file_path: 'trivy-results.txt'
       #    initial_comment: 'Scan report by Alphonsus Tay'
 
 
@@ -42,8 +42,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: 'trivy-results.sarif'
-          path: 'trivy-results.sarif'
+          name: 'trivy-results.txt'
+          path: 'trivy-results.txt'
 
       # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
       # Upload the report to the Slack channel.
@@ -55,7 +55,7 @@ jobs:
       - name: Download Trivy scan results
         uses: actions/download-artifact@v4
         with:
-          name: 'trivy-results.sarif'
+          name: 'trivy-results.txt'
           path: .
 
       - name: Slack Notification on Failure
@@ -69,17 +69,7 @@ jobs:
           SLACK_MESSAGE: | 
             *Scan failed - Alphonsus Tay*
             Failed trivy scan, see uploaded report.
-
-      - name: Slack Notification on Failure
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: failure
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
-          SLACK_USERNAME: DipSA58 CICD
-          SLACK_FILE_UPLOAD: 'trivy-results.sarif'
-          initial_comment: 'Scan report by Alphonsus Tay'
+          SLACK_FILE_UPLOAD: 'trivy-results.txt'
 
       - name: Exit on Failure
         run: exit 1
