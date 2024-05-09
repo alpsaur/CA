@@ -5,7 +5,7 @@ name: Build and Push
 on:
   push:
     branches:
-      - 'release/v*.*'
+    - 'release/v*.*'
 
 env:
   REGISTRY: docker.io
@@ -18,26 +18,28 @@ jobs:
     runs-on: ubuntu-latest
     if: "!startsWith(github.event.head_commit.message, '#NORUN')"
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
 # 2. Perform a scan of the branch that triggered the workflow and generate a report in the table format.
-      - name: Run Trivy scanner
+    - name: Run Trivy scanner
         id: trivy-scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          format: 'table'
-          severity: ${{ secrets.TRIVY_SEVERITY }}
-          output: 'trivy-report.txt'
-          exit-code: '1'
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        trivy-config: trivy.yaml
+        format: 'table'
+        severity: ${{ secrets.TRIVY_SEVERITY }}
+        output: 'trivy-report.txt'
+        exit-code: '1'
 
-      - name: Upload Trivy report
-        if: failure()
-        uses: actions/upload-artifact@v2
-        with:
-          name: trivy-report
-          path: trivy-report.txt
+    - name: Upload Trivy report
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: trivy-report
+        path: trivy-report.txt
 
 # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
 #    Upload the report to the Slack channel.
@@ -46,70 +48,70 @@ jobs:
     runs-on: ubuntu-latest
     if: failure()
     steps:
-      - name: Download Trivy scan results
-        uses: actions/download-artifact@v2
-        with:
-          name: trivy-report
-          path: .
+    - name: Download Trivy scan results
+      uses: actions/download-artifact@v2
+      with:
+        name: trivy-report
+        path: .
       
-      - name: Slack Notification on Failure
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: failure
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
-          SLACK_USERNAME: DipSA58 CICD
-          SLACK_MESSAGE: |
-            *Scan failed - Alphonsus Tay*
-            Failed trivy scan, see uploaded report.
-          SLACK_FILE_UPLOAD: trivy-report.txt
+    - name: Slack Notification on Failure
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_COLOR: failure
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
+        SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+        SLACK_USERNAME: DipSA58 CICD
+        SLACK_MESSAGE: |
+          *Scan failed - Alphonsus Tay*
+          Failed trivy scan, see uploaded report.
+        SLACK_FILE_UPLOAD: trivy-report.txt
 
-      - name: Exit on Failure
-        run: exit 1
+    - name: Exit on Failure
+      run: exit 1
 
 # 4. If the scan produces no vulnerabilities, then containerized the application with the Dockerfile
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 # 5. After successfully building the image, push the image to your Docker Hub account.
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          CONTEXT: .
-          FILE: ./Dockerfile
-          PUSH: true
-          TAGS: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          OUTPUT: digest
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        CONTEXT: .
+        FILE: ./Dockerfile
+        PUSH: true
+        TAGS: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+        OUTPUT: digest
 
 # 6. Digitally sign the image that you have built and push
-      - name: Sign image with a key
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-          cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+    - name: Sign image with a key
+      run: |
+        echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+        cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
+      env:
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 
 # 7. Send a notification to Slack on the successful run of the workflow. 
-      - name: Slack Notification on Success
-        #if: success()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: success
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
-          SLACK_USERNAME: DipSA58 CICD
-          SLACK_TITLE: Image build and signed
-          SLACK_MESSAGE: |
-            *Name*: Alphonsus Tay
-            *Matriculation*: A0290884N
-            *Email*: alphonsus.tay@gmail.com
-            *Git*: https://github.com/alpsaur/go-fortune
-            *Image*: https://hub.docker.com/repository/docker/alpsaur/ghact-go-fortune
+    - name: Slack Notification on Success
+      #if: success()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_COLOR: success
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
+        SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+        SLACK_USERNAME: DipSA58 CICD
+        SLACK_TITLE: Image build and signed
+        SLACK_MESSAGE: |
+          *Name*: Alphonsus Tay
+          *Matriculation*: A0290884N
+          *Email*: alphonsus.tay@gmail.com
+          *Git*: https://github.com/alpsaur/go-fortune
+          *Image*: https://hub.docker.com/repository/docker/alpsaur/ghact-go-fortune
