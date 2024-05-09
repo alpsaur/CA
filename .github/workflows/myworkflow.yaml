@@ -26,7 +26,7 @@ jobs:
           trivy-config: trivy.yaml
           format: 'table'
           severity: 'HIGH'
-          output: 'trivy-report.txt'
+          output: 'trivy_report.txt'
           exit-code: 1
 
       - name: Upload Trivy report
@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: trivy-report
-          path: trivy-report.txt
+          path: trivy_report.txt
 
       # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
       # Upload the report to the Slack channel.
@@ -60,7 +60,7 @@ jobs:
           SLACK_MESSAGE: | 
             *Scan failed - Alphonsus Tay*
             Failed trivy scan, see uploaded report.
-          SLACK_FILE_UPLOAD: trivy-report.txt
+          SLACK_FILE_UPLOAD: trivy_report.txt
 
       - name: Exit on Failure
         run: exit 1
