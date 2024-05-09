@@ -33,7 +33,7 @@ jobs:
         #if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-report
+          name: trivy_report
           path: trivy_report.txt
 
       # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
@@ -46,7 +46,7 @@ jobs:
       - name: Download Trivy scan results
         uses: actions/download-artifact@v4
         with:
-          name: trivy-report
+          name: trivy_report
           path: .
 
       - name: Slack Notification on Failure
