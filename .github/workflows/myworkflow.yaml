@@ -25,7 +25,7 @@ jobs:
           scan-ref: '.'
           trivy-config: trivy.yaml
           format: 'table'
-          severity: ${{ secrets.TRIVY_SEVERITY }}
+          severity: 'HIGH'
           output: 'trivy-report.txt'
           exit-code: '1'
 
