@@ -30,7 +30,7 @@ jobs:
           exit-code: 1
 
       - name: Upload Trivy report
-        if: failure()
+        #if: failure()
         uses: actions/upload-artifact@v2
         with:
           name: trivy-report
@@ -41,7 +41,7 @@ jobs:
   actions-for-failure:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: failure()
+    #if: failure()
     steps:
       - name: Download Trivy scan results
         uses: actions/download-artifact@v2
