@@ -33,7 +33,7 @@ jobs:
         with:
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
           slack_channel: ${{ secrets.SLACK_CHANNEL_ID }}
-          slack_token: ${{secrets.SLACK_BOT_TOKEN}}
+          slack_token: ${{secrets.SLACK_TOKEN}}
           file_path: 'trivy-results.txt'
           initial_comment: 'Scan report by Alphonsus Tay'
 
@@ -64,7 +64,7 @@ jobs:
           SLACK_COLOR: failure
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_USERNAME: DipSA58 CICD
           SLACK_MESSAGE: | 
             *Scan failed - Alphonsus Tay*
@@ -125,7 +125,7 @@ jobs:
           SLACK_COLOR: success
           #SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           #SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          #SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+          #SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_USERNAME: DipSA58 CICD
           SLACK_TITLE: Image build and signed
           SLACK_MESSAGE: |
