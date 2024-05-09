@@ -23,7 +23,7 @@ jobs:
 
 # 2. Perform a scan of the branch that triggered the workflow and generate a report in the table format.
       - name: Run Trivy scanner
-        id: trivy
+        id: trivy-scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
