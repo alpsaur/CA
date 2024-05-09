@@ -2,7 +2,7 @@ name: Build and Push # 1. The pipeline should be triggered whenever this is a pu
 on:
   push:
     branches:
-      - 'release/v\*.\*'
+      - 'release/v*.*'
 env:
   REGISTRY: docker.io
   IMAGE_NAME: alpsaur/go-fortune
