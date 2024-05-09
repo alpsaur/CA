@@ -23,9 +23,16 @@ jobs:
         with:
           scan-type: 'fs'
           format: 'table'
-          severity: ${{ secrets.TRIVY_SEVERITY }}
+          severity: 'HIGH'
           output: 'trivy-results.txt'
           exit-code: 1
+
+      - name: Upload Trivy report with Artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'trivy-results.txt'
+          path: 'trivy-results.txt'
 
       # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
       # Upload the report to the Slack channel.
@@ -34,6 +41,12 @@ jobs:
     runs-on: ubuntu-latest
     if: failure()
     steps:
+      - name: Download Trivy scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: 'trivy-results.txt'
+          path: .
+
       - name: Slack Notification on Failure
         uses: rtCamp/action-slack-notify@v2
         env:
