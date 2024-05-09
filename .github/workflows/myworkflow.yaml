@@ -5,7 +5,7 @@ name: Build and Push
 on:
   push:
     branches:
-      - 'release/v[0-9]+.[0-9]+'
+      - 'release/v*.*'
 
 env:
   REGISTRY: docker.io
@@ -40,11 +40,11 @@ jobs:
 
 # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
 #    Upload the report to the Slack channel.
-    actions-for-failure: 
-      needs: goLang_Scan
-      runs-on: ubuntu-latest
-      if: failure()
-      steps:
+  actions-for-failure: 
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
       - name: Download Trivy scan results
         uses: actions/download-artifact@v2
         with:
@@ -90,16 +90,10 @@ jobs:
 # 6. Digitally sign the image that you have built and push
       - name: Sign image with a key
         run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
         env:
-          TAGS: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
 # 7. Send a notification to Slack on the successful run of the workflow. 
       - name: Slack Notification on Success
