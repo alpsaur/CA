@@ -101,11 +101,21 @@ jobs:
 
       # 6. Digitally sign the image that you have built and push
       - name: Sign image with a key
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
-          cosign sign --key cosign.key --password ${{ secrets.COSIGN_PASSWORD }} ${{ env.IMAGE_NAME }}:${{ github.sha }}
-        env:
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      run: |
+        images=""
+        for tag in ${TAGS}; do
+          images+="${tag}@${DIGEST} "
+        done
+        cosign sign --yes --key env://COSIGN_PRIVATE_KEY alpsaur/go-fortune:${{ github.sha }}
+      env:
+        TAGS: alpsaur/go-fortune:${{ github.sha }}
+        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
+
+      - name: Verify image with public key
+        run: 
+          cosign verify --key cosign.pub alpsaur/go-fortune:${{ github.sha }}
 
       # 7. Send a notification to Slack on the successful run of the workflow.
       - name: Slack Notification on Success
