@@ -23,12 +23,13 @@ jobs:
 
 # 2. Perform a scan of the branch that triggered the workflow and generate a report in the table format.
       - name: Run Trivy scanner
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           format: 'table'
-          output: 'trivy-report.txt'
           severity: ${{ secrets.TRIVY_SEVERITY }}
+          output: 'trivy-report.txt'
           exit-code: '1'
 
       - name: Upload Trivy report
