@@ -23,7 +23,7 @@ jobs:
         with:
           scan-type: 'fs'
           format: 'table'
-          severity: 'HIGH'
+          severity: ${{ secrets.TRIVY_SEVERITY }}
           output: 'trivy-results.txt'
           exit-code: 1
 
@@ -58,7 +58,6 @@ jobs:
           SLACK_MESSAGE: | 
             *Scan failed - Alphonsus Tay*
             Failed trivy scan, see uploaded report.
-          SLACK_FILE_UPLOAD: 'trivy-results.txt'
 
       - name: Slack upload file
         uses: MeilCli/slack-upload-file@v4.0.6
@@ -66,7 +65,7 @@ jobs:
           slack_token: ${{ secrets.SLACK_TOKEN }}
           channel_id: ${{ secrets.SLACK_CHANNEL_ID }}
           file_path: 'trivy-results.txt'
-          initial_comment: 'Scan report by Alphonsus Tay with MeilCli/slack-upload-file@v4.0.6'
+          initial_comment: 'Scan report by Alphonsus Tay'
 
       - name: Exit on Failure
         run: exit 1
