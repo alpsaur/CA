@@ -5,7 +5,7 @@ name: Build and Push
 on:
   push:
     branches:
-      - 'release/v*.*'
+      - 'release/v[0-9]+.[0-9]+'
 
 env:
   REGISTRY: docker.io
@@ -25,11 +25,11 @@ jobs:
       - name: Run Trivy scanner
         uses: aquasecurity/trivy-action@master
         with:
-        scan-type: 'fs'
-        format: 'table'
-        output: 'trivy-report.txt'
-        severity: ${{ secrets.TRIVY_SEVERITY }}
-        exit-code: '1'
+          scan-type: 'fs'
+          format: 'table'
+          output: 'trivy-report.txt'
+          severity: ${{ secrets.TRIVY_SEVERITY }}
+          exit-code: '1'
 
       - name: Upload Trivy report
         if: failure()
