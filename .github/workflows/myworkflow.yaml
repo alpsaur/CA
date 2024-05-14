@@ -1,19 +1,14 @@
-name: Build and Push
-
-# 1. The pipeline should be triggered whenever this is a push to a branch name 
-# with the following pattern release/v<digit>.<digit>
+name: Build and Push # 1. The pipeline should be triggered whenever this is a push to a branch name # with the following pattern release/v<digit>.<digit>
 on:
   push:
     branches:
       - 'release/v*.*'
-
 env:
   REGISTRY: docker.io
   IMAGE_NAME: alpsaur/go-fortune
 
 jobs:
-
-# 8. The pipeline should not run if the commit message starts with #NORUN
+  # 8. The pipeline should not run if the commit message starts with #NORUN
   build-and-push:
     runs-on: ubuntu-latest
     if: "!startsWith(github.event.head_commit.message, '#NORUN')"
@@ -21,53 +16,77 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-# 2. Perform a scan of the branch that triggered the workflow and generate a report in the table format.
+      # 2. Perform a scan of the branch that triggered the workflow and generate a report in the table format.
       - name: Run Trivy scanner
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
-        scan-type: 'fs'
-        format: 'table'
-        output: 'trivy-report.txt'
-        severity: ${{ secrets.TRIVY_SEVERITY }}
-        exit-code: '1'
+          scan-type: 'fs'
+          format: 'table'
+          severity: 'CRITICAL'
+          output: 'trivy-results.txt'
+          exit-code: 1
 
-      - name: Upload Trivy report
+      - name: Upload Trivy report with Artifact
         if: failure()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: trivy-report
-          path: trivy-report.txt
+          name: 'trivy-results.txt'
+          path: 'trivy-results.txt'
 
-# 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
-#    Upload the report to the Slack channel.
-    actions-for-failure: 
-      needs: goLang_Scan
-      runs-on: ubuntu-latest
-      if: failure()
-      steps:
+      # 3. If any vulnerabilities are found in the code base, send a message to the provided Slack channel
+      # Upload the report to the Slack channel.
+  actions-for-failure:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
       - name: Download Trivy scan results
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: trivy-report
+          name: 'trivy-results.txt'
           path: .
-      
+
       - name: Slack Notification on Failure
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: failure
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_USERNAME: DipSA58 CICD
-          SLACK_MESSAGE: |
+          SLACK_MESSAGE: | 
             *Scan failed - Alphonsus Tay*
             Failed trivy scan, see uploaded report.
-          SLACK_FILE_UPLOAD: trivy-report.txt
+
+      - name: Slack upload file
+        uses: MeilCli/slack-upload-file@v4.0.6
+        with:
+          slack_token: ${{ secrets.SLACK_TOKEN }}
+          channel_id: ${{ secrets.SLACK_CHANNEL_ID }}
+          file_path: 'trivy-results.txt'
+          initial_comment: 'Scan report by Alphonsus Tay'
 
       - name: Exit on Failure
         run: exit 1
 
-# 4. If the scan produces no vulnerabilities, then containerized the application with the Dockerfile
+      # 4. If the scan produces no vulnerabilities, then containerized the application with the Dockerfile
+  actions-for-success:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -77,7 +96,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-# 5. After successfully building the image, push the image to your Docker Hub account.
+      # 5. After successfully building the image, push the image to your Docker Hub account.
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -87,29 +106,32 @@ jobs:
           TAGS: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           OUTPUT: digest
 
-# 6. Digitally sign the image that you have built and push
-      - name: Sign image with a key
+      # 6. Digitally sign the image that you have built and push
+      - name: Sign image with private key
         run: |
           images=""
           for tag in ${TAGS}; do
             images+="${tag}@${DIGEST} "
           done
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY alpsaur/go-fortune:${{ github.sha }}
         env:
-          TAGS: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          TAGS: alpsaur/go-fortune:${{ github.sha }}
           COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
 
-# 7. Send a notification to Slack on the successful run of the workflow. 
+      - name: Verify image with public key
+        run: 
+          cosign verify --key cosign.pub alpsaur/go-fortune:${{ github.sha }}
+
+      # 7. Send a notification to Slack on the successful run of the workflow.
       - name: Slack Notification on Success
-        #if: success()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: success
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL_ID }}
-          SLACK_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+          SLACK_TOKEN: ${{secrets.SLACK_TOKEN}}
           SLACK_USERNAME: DipSA58 CICD
           SLACK_TITLE: Image build and signed
           SLACK_MESSAGE: |
