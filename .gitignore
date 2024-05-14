@@ -1,7 +1,7 @@
 node_modules/
 *.log
-*.secret.*
-*.secret*.*
+#*.secret.*
+#*.secret*.*
 
 # Cosign private key
 *.cosign.key
